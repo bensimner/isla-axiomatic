@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+#
+# Runs isla-axiomatic
+#
+
+usage() {
+  echo "Usage $0 [OPTION...] LITMUS_TEST"
+  echo "Options:"
+  echo " -h --help                                  print this help"
+  echo " --exe=/path/to/isla-axiomatic              path to isla-axiomatic executable"
+  echo " -A --arch=/path/to/arch.ir                 ISA definition to use"
+  echo " -C --config=/path/to/config.toml           architecture config"
+  echo " -m --model=/path/to/model.cat              concurrency model"
+  echo " --footprint-config=/path/to/config.toml    architecture config for footprint analysis"
+  echo " --isla-litmus=/path/to/isla-litmus         path to isla-litmus translator tool"
+  echo " --verbose                                  more output"
+  echo " --debug                                    a lot more output"
+  echo " --debug-more                               much lots more output"
+  echo " --debug-all                                all the output! (warning: incredibly verbose)"
+  echo " --probes-for-debug-more=PROBES             functions to probe on more debugging"
+  echo
+  echo " other arguments are passed to isla verbatim."
+}
+
+# options
+arch=
+config=
+footprint_config=
+model=
+
+isla_exe=isla/target/release/isla-axiomatic
+isla_args=()  # use bash arrays to collect arguments for isla.
+isla_debug_level=0
+isla_debug_probes=
+isla_litmus=isla/isla-litmus/isla-litmus
+
+# collect all the -arg and --args
+while true; do
+  opt="$1"
+  arg=
+  shift
+
+  if [[ "$opt" = "" ]]; then
+    break
+  fi
+
+  orig_arg="$opt"
+
+  if [[ "$opt" = *=* ]]; then
+    arg="${opt#*=}"
+    opt="${opt%%=*}"
+    has_arg=1
+  elif [[ "$opt" = -[ACm] ]]; then
+    arg="$1"
+    shift
+    has_arg=1
+  else
+    has_arg=0
+  fi
+
+  case "$opt" in
+  --arch | -A)
+    arch="$arg"
+    ;;
+  --config | -C)
+    config="$arg"
+    ;;
+  --footprint-config)
+    footprint_config="$arg"
+    ;;
+  --isla-litmus)
+    isla_litmus="$arg"
+    ;;
+  --model | -m)
+    model="$arg"
+    ;;
+  --exe)
+    isla_exe="$arg"
+    ;;
+  --verbose)
+    isla_debug_level=1
+    ;;
+  --debug)
+    isla_debug_level=2
+    ;;
+  --debug-more)
+    isla_debug_level=3
+    ;;
+  --probes-for-debug-more)
+    isla_debug_probes="$arg"
+    ;;
+  --debug-all)
+    isla_debug_level=4
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  --)
+    break
+    ;;
+  *)
+    isla_args+=("$orig_arg")
+    ;;
+  esac
+done
+
+check_requires() {
+  if [ "$2" = "" ]; then
+    echo "isla-axiomatic: error: requires --$1"
+    usage
+    exit 1
+  fi
+}
+
+check_requires "arch" "$arch"
+check_requires "config" "$config"
+check_requires "model" "$model"
+
+if [ "$footprint_config" = "" ]; then
+  footprint_config="$config"
+fi
+
+isla_debug_args=""
+isla_debug_probes=()
+for p in "$isla_debug_probes"; do
+  isla_debug_probes+=(--probe "${p}")
+done
+
+case "$isla_debug_level" in
+0) ;;
+1)
+  isla_args+=(--verbose)
+  ;;
+2)
+  isla_args+=(--verbose --debug l --threads 1 --thread-groups 1)
+  ;;
+3)
+  isla_args+=(--verbose --debug lp --threads 1 --thread-groups 1)
+  isla_args+=${isla_debug_probes[@]}
+  ;;
+4)
+  isla_args+=(--verbose --debug lpfm --probe-all --threads 1 --thread-groups 1)
+  ;;
+*)
+  echo "isla-axiomatic: internal error: bad debug level '${isla_debug_level}'"
+  exit 1
+  ;;
+esac
+
+# Run it!
+${isla_exe} \
+  --config=${config} \
+  --arch=${arch} \
+  --model=${model} \
+  --isla-litmus=${isla_litmus} \
+  "${isla_args[@]}" \
+  "$@"
+

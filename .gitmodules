@@ -1,0 +1,26 @@
+[submodule "isla"]
+	path = isla
+	url = https://github.com/rems-project/isla
+[submodule "sail-src/sail-arm"]
+	path = sail-src/sail-arm
+	url = https://github.com/rems-project/sail-arm
+[submodule "litmus-tests/litmus-tests-armv8a-system-vmsa"]
+	path = litmus-tests/litmus-tests-armv8a-system-vmsa
+	url = https://github.com/litmus-tests/litmus-tests-armv8a-system-vmsa
+	branch = wip-armv9p4
+[submodule "ir"]
+	path = ir
+	url = https://github.com/rems-project/isla-snapshots
+[submodule "tests/litmus-tests-armv8a-system-vmsa"]
+	path = tests/litmus-tests-armv8a-system-vmsa
+	url = https://github.com/litmus-tests/litmus-tests-armv8a-system-vmsa
+[submodule "tests/litmus-tests-armv8a-system"]
+	path = tests/litmus-tests-armv8a-system
+	url = https://github.com/litmus-tests/litmus-tests-armv8a-system
+[submodule "tests/litmus-tests-riscv"]
+	path = tests/litmus-tests-riscv
+	url = https://github.com/litmus-tests/litmus-tests-riscv
+[submodule "models/aarch64"]
+	path = models/aarch64
+	url = https://github.com/rems-project/system-semantics-arm-axiomatic-models
+	branch = wip-armv9p4
