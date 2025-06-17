@@ -31,7 +31,7 @@ model=
 isla_exe=isla/target/release/isla-axiomatic
 isla_args=()  # use bash arrays to collect arguments for isla.
 isla_debug_level=0
-isla_debug_probes=
+isla_debug_probes_args=()
 isla_litmus=isla/isla-litmus/isla-litmus
 
 # collect all the -arg and --args
@@ -87,7 +87,7 @@ while true; do
     isla_debug_level=3
     ;;
   --probes-for-debug-more)
-    isla_debug_probes="$arg"
+    isla_debug_probes_args=($arg)
     ;;
   --debug-all)
     isla_debug_level=4
@@ -121,9 +121,8 @@ if [ "$footprint_config" = "" ]; then
   footprint_config="$config"
 fi
 
-isla_debug_args=""
 isla_debug_probes=()
-for p in "$isla_debug_probes"; do
+for p in "${isla_debug_probes_args[@]}"; do
   isla_debug_probes+=(--probe "${p}")
 done
 
@@ -133,11 +132,11 @@ case "$isla_debug_level" in
   isla_args+=(--verbose)
   ;;
 2)
-  isla_args+=(--verbose --debug l --threads 1 --thread-groups 1)
+  isla_args+=(--verbose --debug lg --threads 1 --thread-groups 1)
   ;;
 3)
   isla_args+=(--verbose --debug lp --threads 1 --thread-groups 1)
-  isla_args+=${isla_debug_probes[@]}
+  isla_args+=(${isla_debug_probes[@]})
   ;;
 4)
   isla_args+=(--verbose --debug lpfm --probe-all --threads 1 --thread-groups 1)
